@@ -1,7 +1,20 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
+#include <deque>
+#include <chrono>
+#include <thread>
+#include "snake.cpp"
+#include "rtype.cpp"
 
-enum GameOption {
+enum GameState
+{
+    MAIN_MENU,
+    SNAKE_GAME,
+    RTYPE_GAME,
+};
+
+enum GameOption
+{
     SNAKE,
     PACMAN,
     NIBBLER,
@@ -10,11 +23,15 @@ enum GameOption {
     FIX_IT_FELIX,
 };
 
-int main() {
+
+
+int main()
+{
     sf::RenderWindow window(sf::VideoMode(1920, 1080), "Game Menu");
 
     sf::Font font;
-    if (!font.loadFromFile("arial.ttf")) {
+    if (!font.loadFromFile("arial.ttf"))
+    {
         std::cerr << "Failed to load font." << std::endl;
         return 1;
     }
@@ -34,46 +51,67 @@ int main() {
     fixItFelixText.setPosition(100, 350);
 
     GameOption selectedOption = SNAKE;
+    GameState gameState = MAIN_MENU;
+    SnakeGame snakeGame(window);
+    RTypeGame rTypeGame(window);
 
-    while (window.isOpen()) {
+    while (window.isOpen())
+    {
         sf::Event event;
-        while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed) {
+        while (window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+            {
                 window.close();
-            } else if (event.type == sf::Event::KeyPressed) {
-                switch (event.key.code) {
-                    case sf::Keyboard::Up:
+            }
+            else if (event.type == sf::Event::KeyPressed)
+            {
+                switch (event.key.code)
+                {
+                case sf::Keyboard::Up:
+                    if (gameState == MAIN_MENU)
+                    {
                         selectedOption = static_cast<GameOption>((selectedOption - 1 + FIX_IT_FELIX + 1) % (FIX_IT_FELIX + 1));
-                        break;
-                    case sf::Keyboard::Down:
+                    }
+                    break;
+                case sf::Keyboard::Down:
+                    if (gameState == MAIN_MENU)
+                    {
                         selectedOption = static_cast<GameOption>((selectedOption + 1) % (FIX_IT_FELIX + 1));
-                        break;
-                    case sf::Keyboard::Enter:
+                    }
+                    break;
+                case sf::Keyboard::Enter:
+                    if (gameState == MAIN_MENU)
+                    {
                         std::cout << "Selected option: ";
-                        switch (selectedOption) {
-                            case SNAKE:
-                                std::cout << "Snake";
-                                break;
-                            case PACMAN:
-                                std::cout << "Pacman";
-                                break;
-                            case NIBBLER:
-                                std::cout << "Nibbler";
-                                break;
-                            case RTYPE:
-                                std::cout << "R-Type";
-                                break;
-                            case RUNNER:
-                                std::cout << "Runner";
-                                break;
-                            case FIX_IT_FELIX:
-                                std::cout << "Fix it Felix Jr.";
-                                break;
+                        switch (selectedOption)
+                        {
+                        case SNAKE:
+                            std::cout << "Snake";
+                            gameState = SNAKE_GAME;
+                            break;
+                        case PACMAN:
+                            std::cout << "Pacman";
+                            break;
+                        case NIBBLER:
+                            std::cout << "Nibbler";
+                            break;
+                        case RTYPE:
+                            std::cout << "R-Type";
+                            gameState = RTYPE_GAME;
+                            break;
+                        case RUNNER:
+                            std::cout << "Runner";
+                            break;
+                        case FIX_IT_FELIX:
+                            std::cout << "Fix it Felix Jr.";
+                            break;
                         }
                         std::cout << std::endl;
-                        break;
-                    default:
-                        break;
+                    }
+                    break;
+                default:
+                    break;
                 }
             }
         }
@@ -87,33 +125,43 @@ int main() {
         rtypetext.setFillColor(sf::Color::White);
         runnertext.setFillColor(sf::Color::White);
 
-        switch (selectedOption) {
-            case SNAKE:
-                snakeText.setFillColor(sf::Color::Red);
-                break;
-            case PACMAN:
-                pacmanText.setFillColor(sf::Color::Red);
-                break;
-            case NIBBLER:
-                nibblerText.setFillColor(sf::Color::Red);
-                break;
-            case RTYPE:
-                rtypetext.setFillColor(sf::Color::Red);
-                break;
-            case RUNNER:
-                runnertext.setFillColor(sf::Color::Red);
-                break;
-            case FIX_IT_FELIX:
-                fixItFelixText.setFillColor(sf::Color::Red);
-                break;
+        switch (selectedOption)
+        {
+        case SNAKE:
+            snakeText.setFillColor(sf::Color::Red);
+            break;
+        case PACMAN:
+            pacmanText.setFillColor(sf::Color::Red);
+            break;
+        case NIBBLER:
+            nibblerText.setFillColor(sf::Color::Red);
+            break;
+        case RTYPE:
+            rtypetext.setFillColor(sf::Color::Red);
+            break;
+        case RUNNER:
+            runnertext.setFillColor(sf::Color::Red);
+            break;
+        case FIX_IT_FELIX:
+            fixItFelixText.setFillColor(sf::Color::Red);
+            break;
         }
 
-        window.draw(snakeText);
-        window.draw(pacmanText);
-        window.draw(nibblerText);
-        window.draw(rtypetext);
-        window.draw(runnertext);
-        window.draw(fixItFelixText);
+        if (gameState == SNAKE_GAME)
+        {
+            snakeGame.run();
+        } else if (gameState == RTYPE_GAME) {
+            rTypeGame.run();
+        }
+        else
+        {
+            window.draw(snakeText);
+            window.draw(pacmanText);
+            window.draw(nibblerText);
+            window.draw(rtypetext);
+            window.draw(runnertext);
+            window.draw(fixItFelixText);
+        }
 
         window.display();
     }

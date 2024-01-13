@@ -2,12 +2,14 @@ CXX = g++
 CXXFLAGS = -Wall -std=c++11
 SFML_LIBS = -lsfml-graphics -lsfml-window -lsfml-system
 
-TARGET = game_menu
+TARGET = arcade
 
 all: $(TARGET)
 
-$(TARGET): main.cpp
+$(TARGET): main.cpp snake.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(SFML_LIBS)
 
-clean:
+fclean:
 	rm -f $(TARGET)
+
+re: fclean all
