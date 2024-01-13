@@ -11,5 +11,6 @@ $(TARGET): main.cpp snake.cpp
 
 fclean:
 	rm -f $(TARGET)
+	rm -f *.o
 
 re: fclean all
