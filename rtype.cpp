@@ -31,9 +31,12 @@ public:
 
 private:
     sf::RenderWindow &window;
-    sf::RectangleShape playerShip;
-    std::deque<sf::RectangleShape> enemyShips;
+    sf::Sprite background;
+    sf::Sprite playerShip;
+    std::deque<sf::Sprite> enemyShips;
     std::deque<sf::RectangleShape> bullets;
+    std::deque<sf::RectangleShape> playerBullets;
+    std::deque<sf::RectangleShape> enemyBullets;
     Direction playerDirection;
     bool shooting;
     sf::Clock clock;
@@ -42,14 +45,34 @@ private:
 
     float shootingInterval = 0.5f;
 
+    sf::Texture playerTexture;
+    sf::Texture enemyTexture;
+    sf::Texture backgroundTexture;
+
     sf::Font font;
     sf::Text healthText;
 
     void initialize()
     {
-        playerShip.setSize(sf::Vector2f(50, 50));
-        playerShip.setPosition(window.getSize().x / 2 - 25, window.getSize().y - 60);
-        playerShip.setFillColor(sf::Color::Blue);
+        if (!playerTexture.loadFromFile("spaceship.png"))
+        {
+            std::cerr << "Error loading player texture!" << std::endl;
+        }
+
+        if (!enemyTexture.loadFromFile("enemy.png"))
+        {
+            std::cerr << "Error loading enemy texture!" << std::endl;
+        }
+
+        if (!backgroundTexture.loadFromFile("space.jpg"))
+        {
+            std::cerr << "Error loading background texture!" << std::endl;
+        }
+
+        background.setTexture(backgroundTexture);
+
+        playerShip.setTexture(playerTexture);
+        playerShip.setPosition(window.getSize().x / 2 - playerShip.getGlobalBounds().width / 2, window.getSize().y - 60);
 
         playerDirection = NONE;
 
@@ -125,10 +148,47 @@ private:
         moveEnemyShips();
 
         handleShooting();
+        handleEnemyShooting();
 
         checkCollisions();
 
-        moveBullets();
+        movePlayerBullets();
+        moveEnemyBullets();
+    }
+
+    void handleEnemyShooting()
+    {
+        for (auto &enemyShip : enemyShips)
+        {
+            if (rand() % 100 < 5)
+            {
+                enemyShoot(enemyShip.getPosition().x + enemyShip.getGlobalBounds().width / 2 - 2.5,
+                           enemyShip.getPosition().y + enemyShip.getGlobalBounds().height);
+            }
+        }
+    }
+
+    void enemyShoot(float x, float y)
+    {
+        sf::RectangleShape enemyBullet(sf::Vector2f(5, 10));
+        enemyBullet.setPosition(x - 2.5, y);
+        enemyBullet.setFillColor(sf::Color::Red);
+        enemyBullets.push_back(enemyBullet);
+    }
+
+    void moveEnemyBullets()
+    {
+        const float enemyBulletSpeed = 5.0f;
+
+        for (auto &bullet : enemyBullets)
+        {
+            bullet.move(0, enemyBulletSpeed);
+
+            if (bullet.getPosition().y > window.getSize().y)
+            {
+                enemyBullets.pop_front();
+            }
+        }
     }
 
     void handleShooting()
@@ -163,17 +223,14 @@ private:
             }
         }
 
-        for (auto bulletIter = bullets.begin(); bulletIter != bullets.end();)
+        for (auto bulletIter = playerBullets.begin(); bulletIter != playerBullets.end();)
         {
-            bool bulletRemoved = false;
-
             for (auto enemyIter = enemyShips.begin(); enemyIter != enemyShips.end();)
             {
                 if (bulletIter->getGlobalBounds().intersects(enemyIter->getGlobalBounds()))
                 {
-                    bulletIter = bullets.erase(bulletIter);
+                    bulletIter = playerBullets.erase(bulletIter);
                     enemyIter = enemyShips.erase(enemyIter);
-                    bulletRemoved = true;
                     break;
                 }
                 else
@@ -182,7 +239,28 @@ private:
                 }
             }
 
-            if (!bulletRemoved)
+            if (bulletIter != playerBullets.end())
+            {
+                ++bulletIter;
+            }
+        }
+
+        for (auto bulletIter = enemyBullets.begin(); bulletIter != enemyBullets.end();)
+        {
+            if (playerShip.getGlobalBounds().intersects(bulletIter->getGlobalBounds()))
+            {
+                health -= 1;
+                std::cout << "Health: " << health << std::endl;
+
+                bulletIter = enemyBullets.erase(bulletIter);
+
+                if (health <= 0)
+                {
+                    window.close();
+                    return;
+                }
+            }
+            else
             {
                 ++bulletIter;
             }
@@ -190,7 +268,7 @@ private:
 
         if (enemyShips.empty())
         {
-            spawnEnemyShips(5);
+            spawnEnemyShips(10);
         }
 
         updateHealthText();
@@ -205,6 +283,8 @@ private:
     {
         window.clear();
 
+        window.draw(background);
+
         window.draw(healthText);
 
         window.draw(playerShip);
@@ -214,7 +294,12 @@ private:
             window.draw(enemyShip);
         }
 
-        for (const auto &bullet : bullets)
+        for (const auto &bullet : playerBullets)
+        {
+            window.draw(bullet);
+        }
+
+        for (const auto &bullet : enemyBullets)
         {
             window.draw(bullet);
         }
@@ -239,7 +324,7 @@ private:
                 playerShip.move(0, -playerSpeed);
             break;
         case DOWN:
-            if (playerShip.getPosition().y + playerShip.getSize().y < window.getSize().y)
+            if (playerShip.getPosition().y + playerShip.getGlobalBounds().height < window.getSize().y)
                 playerShip.move(0, playerSpeed);
             break;
         default:
@@ -269,24 +354,24 @@ private:
 
     void shoot()
     {
-        sf::RectangleShape bullet(sf::Vector2f(5, 10));
-        bullet.setPosition(playerShip.getPosition().x + playerShip.getSize().x / 2 - 2.5,
-                           playerShip.getPosition().y);
-        bullet.setFillColor(sf::Color::Green);
-        bullets.push_back(bullet);
+        sf::RectangleShape playerBullet(sf::Vector2f(5, 10));
+        playerBullet.setPosition(playerShip.getPosition().x + playerShip.getGlobalBounds().width / 2 - 2.5,
+                                 playerShip.getPosition().y);
+        playerBullet.setFillColor(sf::Color::Green);
+        playerBullets.push_back(playerBullet);
     }
 
-    void moveBullets()
+    void movePlayerBullets()
     {
-        const float bulletSpeed = 8.0f;
+        const float playerBulletSpeed = 8.0f;
 
-        for (auto &bullet : bullets)
+        for (auto &bullet : playerBullets)
         {
-            bullet.move(0, -bulletSpeed);
+            bullet.move(0, -playerBulletSpeed);
 
             if (bullet.getPosition().y < 0)
             {
-                bullets.pop_front();
+                playerBullets.pop_front();
             }
         }
     }
@@ -295,9 +380,8 @@ private:
     {
         for (int i = 0; i < count; ++i)
         {
-            sf::RectangleShape enemyShip(sf::Vector2f(50, 50));
+            sf::Sprite enemyShip(enemyTexture);
             enemyShip.setPosition(rand() % (window.getSize().x - 50), -50);
-            enemyShip.setFillColor(sf::Color::Red);
 
             enemyShips.push_back(enemyShip);
         }
