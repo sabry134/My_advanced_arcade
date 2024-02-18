@@ -35,7 +35,6 @@ public:
             std::cerr << "Failed to load alien texture!" << std::endl;
         }
 
-        // Load player texture
         if (!playerTexture.loadFromFile("jetpack.png"))
         {
             std::cerr << "Failed to load player texture!" << std::endl;
@@ -44,7 +43,6 @@ public:
         player.setTexture(playerTexture);
         player.setPosition(700, window.getSize().y - player.getGlobalBounds().height - 20);
 
-        // Load background texture
         if (!backgroundTexture.loadFromFile("space_map.jpg"))
         {
             std::cerr << "Failed to load background texture!" << std::endl;
@@ -66,10 +64,10 @@ public:
 
 private:
     sf::RenderWindow &window;
-    sf::Texture playerTexture;  // Added player texture
-    sf::Sprite player;          // Changed player to sprite
-    sf::Texture backgroundTexture;  // Added background texture
-    sf::Sprite background;          // Added background sprite
+    sf::Texture playerTexture;
+    sf::Sprite player;
+    sf::Texture backgroundTexture;
+    sf::Sprite background;
     std::deque<sf::RectangleShape> obstacles;
     std::deque<sf::Sprite> rockets;
     std::deque<sf::RectangleShape> coins;
@@ -154,10 +152,8 @@ private:
     {
         window.clear();
 
-        // Draw background first
         window.draw(background);
 
-        // Then draw other elements
         window.draw(player);
 
         for (const auto &obstacle : obstacles)
