@@ -5,12 +5,17 @@
 #include <thread>
 #include "snake.cpp"
 #include "rtype.cpp"
+#include "runner.cpp"
 
 enum GameState
 {
     MAIN_MENU,
     SNAKE_GAME,
     RTYPE_GAME,
+    RUNNER_GAME,
+    PACMAN_GAME,
+    NIBBLER_GAME,
+    FIX_IT_FELIX_GAME,
 };
 
 enum GameOption
@@ -54,6 +59,7 @@ int main()
     GameState gameState = MAIN_MENU;
     SnakeGame snakeGame(window);
     RTypeGame rTypeGame(window);
+    RunnerGame runnerGame(window);
 
     while (window.isOpen())
     {
@@ -102,6 +108,7 @@ int main()
                             break;
                         case RUNNER:
                             std::cout << "Runner";
+                            gameState = RUNNER_GAME;
                             break;
                         case FIX_IT_FELIX:
                             std::cout << "Fix it Felix Jr.";
@@ -152,6 +159,8 @@ int main()
             snakeGame.run();
         } else if (gameState == RTYPE_GAME) {
             rTypeGame.run();
+        } else if (gameState == RUNNER_GAME) {
+            runnerGame.run();
         }
         else
         {
